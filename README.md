@@ -25,6 +25,8 @@ You can then navigate to https://ip:port/manage to see the screen as shown below
 
 ![alt text](https://github.com/reddy2004/WordPressWooCommerceDashboard/blob/main/screenshots/manage_main.png)
 
+Click on Bootstrap, this should download all the product list in your wordpress site. It download both active and dormant product list. You can see the progress on your console where you are running this tool. Meanwhile navigate to https://ip:port/orderflowadmin, where you can see that the list of orders is empty. Click on sync to download all the orders that are in "processing" state.
+
 ![alt text](https://github.com/reddy2004/WordPressWooCommerceDashboard/blob/main/screenshots/orders_main.png)
 
 ![alt text](https://github.com/reddy2004/WordPressWooCommerceDashboard/blob/main/screenshots/orders_approvals.png)
