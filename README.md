@@ -13,9 +13,15 @@ However, working with wordpress was a pain for the following reasons.
 
 (d) It does not have a dashboard to track the order until its delivered. Doing manually is cumbersome.
 
+Hence, this tool was born.
 
+Let's go over how to set it up. The tool is developed with javascript (nodejs) and hence you need a node runtime to configure this. Firstly, clone the project to your local workspace and the folder structure should look something like the screenshot below. You can do an npn init and install to download all the node packages required to run this.
 
 ![alt text](https://github.com/reddy2004/WordPressWooCommerceDashboard/blob/main/screenshots/folders.png)
+
+Next, go to the config.json file and add the user credentials. I'm not using a complex encrypted setup as it does not serve any purpose in my case. You can add it if you want your tool to be secure. Once install navigate to the page after starting "node aserver.js". Use https:// instead of http://. You will land on the main page. i.e https://ip:port/orderflowadmin.
+
+You can then navigate to https://ip:port/manage to see the screen as shown below.
 
 ![alt text](https://github.com/reddy2004/WordPressWooCommerceDashboard/blob/main/screenshots/manage_main.png)
 
