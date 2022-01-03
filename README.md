@@ -51,10 +51,26 @@ On the last column, there is a button below the order status. This button is in 
 
 ![alt text](https://github.com/reddy2004/WordPressWooCommerceDashboard/blob/main/screenshots/orders_tracking.png)
 
+The next, and the more important part of the tool is the inventory management. Using Wordpress, I had faced some issues with inventory.
+
+(a) Wordpress inventory management is useless and does not work as expected.
+
+(b) Sometimes, we ship free items, or items get expired or we send incorrect items by mistake. Updating such cases is difficult in wordpress.
+
+(c) Ditto with combo packages and items sold outside the site. Ex. on instagram. We cannot maintain two sets of inventories and two warehouses for this right?
+
+The below screenshots shows the list of all items in the site and the quantity in the stockroom vis-a-vis what is updated in wordpress. Please navigate to https://ip:port/inventoryadmin to see the inventory list.
+
 ![alt text](https://github.com/reddy2004/WordPressWooCommerceDashboard/blob/main/screenshots/inventory_main.png)
+
+You can also search for items. This is usefull as it is difficult to browse the list in a mobile phone and you dont get a search option on the browser as well.
 
 ![alt text](https://github.com/reddy2004/WordPressWooCommerceDashboard/blob/main/screenshots/inventory_search.png)
 
+Clicking on the orders button on the top right shows the list of orders that are in "processing" state. This is a subset of orders that you see in https://ip:port/orderflowadmin. Here you can accept or drop the order. Drop does nothing. Accepts updates the inventory. The inventory is updated based on the changes that are tracked in the tool. If you have made changes to the order, your changes are accepted. Basically the items seen in https://ip:port/orderflowadmin for that order is decremented in the inventory. You can also manually add (ex. New stock in the warehouse) or subract (expired items, sold outside the site, lost etc).
+
 ![alt text](https://github.com/reddy2004/WordPressWooCommerceDashboard/blob/main/screenshots/inventory_order_accept_reject.png)
+
+To make sure that the wordpress site has the correct information of what is present in the stockroom/warehouse, you must have a single source of truth. Here the inventory page shows you both the items in the stock room vis-a-vis the wordpress database. As long as you can make sure that the items shown in warehouse is correct in this tool, you can always 'fix' the wordpress's inventory by syncing this data. Again this is a manual effort. The grayed out rows means item is not present. 'White' means all okay. 'Yellow' means there is a mismatch and you need to fix it.
 
 ![alt text](https://github.com/reddy2004/WordPressWooCommerceDashboard/blob/main/screenshots/inventory_product_update.png)
