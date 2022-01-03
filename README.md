@@ -71,6 +71,8 @@ Clicking on the orders button on the top right shows the list of orders that are
 
 ![alt text](https://github.com/reddy2004/WordPressWooCommerceDashboard/blob/main/screenshots/inventory_order_accept_reject.png)
 
-To make sure that the wordpress site has the correct information of what is present in the stockroom/warehouse, you must have a single source of truth. Here the inventory page shows you both the items in the stock room vis-a-vis the wordpress database. As long as you can make sure that the items shown in warehouse is correct in this tool, you can always 'fix' the wordpress's inventory by syncing this data. Again this is a manual effort. The grayed out rows means item is not present. 'White' means all okay. 'Yellow' means there is a mismatch and you need to fix it.
+To make sure that the wordpress site has the correct information of what is present in the stockroom/warehouse, you must have a single source of truth. Here the inventory page shows you both the items in the stock room vis-a-vis the wordpress database. As long as you can make sure that the items shown in warehouse is correct in this tool, you can always 'fix' the wordpress's inventory by syncing this data. Again this is a manual effort. The grayed out rows means item is not present. 'White' means all okay. 'Yellow' means there is a mismatch and you need to fix it. Refer to the previous screenshots
+
+Below you can see the popup that appears when you click on a product. This is the page where you can update both the stockroom quantity and wordpress quantity. 
 
 ![alt text](https://github.com/reddy2004/WordPressWooCommerceDashboard/blob/main/screenshots/inventory_product_update.png)
