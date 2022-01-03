@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en" ng-app="myInventoryApp">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="https://printjs-4de6.kxcdn.com/print.min.css" crossorigin="anonymous">
+    <!-- <link rel="stylesheet" type="text/css" href="print.css"> -->
+    <title>Snack-cart</title>
+
+        <style>
+            body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                background-color: #DDDDDD;
+                font: 12pt "Tahoma";
+            }
+            * {
+                box-sizing: border-box;
+                -moz-box-sizing: border-box;
+            }
+            .page {
+                width: 210mm;
+                min-height: 297mm;
+                padding: 20mm;
+                margin: 10mm auto;
+                border: 1px #D3D3D3 solid;
+                border-radius: 5px;
+                background: white;
+                box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            }
+            .subpage {
+                padding: 0.5cm;
+                border: 1px red solid;
+                height: 257mm;
+                outline: 1cm #000000 solid;
+            }
+            
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            @media print {
+                html, body {
+                    width: 210mm;
+                    height: 297mm;
+                }
+                .page {
+                    margin: 0;
+                    border: initial;
+                    border-radius: initial;
+                    width: initial;
+                    min-height: initial;
+                    box-shadow: initial;
+                    background: initial;
+                    page-break-after: always;
+                }
+            }
+
+            body.modal-open {
+                overflow: visible;
+            }
+
+            .text-responsive {
+                font-size: calc(100% + 1vw + 1vh);
+            }
+        </style>
+</head>
+<body>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.9/angular.min.js"></script>
+    <script src="assets/ngInventoryController.js"></script>
+    <script src="assets/pageInit2.js"></script>
+        <script
+            src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha2/js/bootstrap.bundle.min.js"
+            integrity="sha384-BOsAfwzjNJHrJ8cZidOg56tcQWfp6y72vEJ8xQ9w6Quywb24iOsW913URv1IS4GD"
+            crossorigin="anonymous"></script>
+    <script src="https://printjs-4de6.kxcdn.com/print.min.js"></script>
+
+    <div ng-controller="myInventory">
+            <div class="container-fluid bg-warn" style="height: 60px; padding-top: 4px;padding-bottom: 4px;">
+                <div class="row">
+                    <div class="col-2" style="width: 100%;">
+                        <button type="button" class="btn btn-dark btn-sm" ng-click="printProductList()">Print</button>
+                    </div>
+                    <div class="col-2" style="width: 100%;">
+                        {{inProgressTasks.syncQuantityInfo.percent}}% Sync'd 
+                    </div>
+                    <div class="col-5" style="width: 100%;">
+                        <button type="button" class="btn btn-dark btn-sm" ng-click="syncWebsiteStockCount()">Sync Stock from WP [{{meta.lastTimeString}}]</button>
+                    </div>
+                    <div class="col-3" style="width: 100%;">
+                        <button type="button" class="btn btn-dark btn-sm" ng-click="showOrdersInList()">Orders</button>
+                    </div>
+                </div>
+            </div>
+            <div class="container-fluid bg-secondary" style="height: 40px; padding-top: 4px;padding-bottom: 4px;">
+                <input id="searchInput" type="text" ng-keydown="onSearchText()" name="" style="width: 60%; "> {{searchKey}} <button type="button" class="btn btn-dark btn-sm" ng-click="clearSearch()">Clear</button> 
+            </div>
+            <div class="container-fluid bg-light">
+                <!-- Content here -->
+                <div id="productsListing" style="width:100%; font-size:2vw;  ">
+                    <table class="table  table-bordered">
+                            <col style="width:70%">
+                            <col style="width:16%">
+                            <col style="width:7%">
+                            <col style="width:7%">
+                      <thead class="table-dark">
+                          <tr>
+                            <td id="Name" style ="word-break:break-all; padding: 2px;"><b>Name </b></td>
+                            <td id="Expiry" style ="word-break:break-all; padding: 2px;"><b>Expiry</b></td>
+                            <td id="Room" style ="word-break:break-all; padding: 2px;"><b>Room</b></td>
+                            <td id="Web" style ="word-break:break-all; padding: 2px;"><b>Website</b></td>
+                          </tr>
+                      </thead>  
+                      <tbody>
+                          <tr ng-repeat="x in cached_product_list" ng-show="x.name.indexOf(searchKey) >= 0" ng-style="(x.website == 0) && {'background-color':'lightgrey'} ||  (x.inventory != x.website) && {'background-color':'lightyellow'} || {'background-color': 'white'}">
+                            <td style ="word-break:break-all; padding: 2px;"> <a href="" ng-click="showProductInfo(x.id, x.name)">{{ x.name }}</a></td>
+                            <td style ="word-break:break-all; padding: 2px;"> {{x.expiry}}</td>
+                            <td style ="word-break:break-all; padding: 2px; text-align : 'center';"> <a href="" ng-click="transactionLog(x.id)">{{x.inventory}}</a></td>
+                            <td style ="word-break:break-all; padding: 2px; text-align : 'center';"> <a href="">{{x.website}}</a></td>
+                          </tr>
+                      </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modal for sync ing dialogs -->
+            <div class="modal fade" id="exampleModalLongSync" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle1" aria-hidden="true">
+              <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle1">Fetching data.</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                    <div class="modal-body">
+                            Wait. Getting data from website. <br>
+                            <img src="icons/progress1.gif" style="width: 60%; margin-right: auto; margin-left: auto;">
+                        </div>
+                </div>
+              </div>
+            </div>
+
+
+            <!-- Modal -->
+            <div class="modal fade" id="exampleModalAddOrders" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+              <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">List of Orders</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                    <div class="modal-body">
+                        <table class="table  table-bordered">
+                              <thead class="table-dark">
+                                  <tr>
+                                    <td id="OrderId" style="width:20%;"><b>Order ID</b></td>
+                                    <td id="Name" style="width:60%;"><b>Name</b></td>
+                                    <td id="Update" style="width:10%;"> <b> Invntry</b></td>
+                                    <td id="Drop" style="width:10%;"> <b> Drop</b></td>
+                                  </tr>
+                              </thead>  
+                              <tbody>
+                                  <tr ng-repeat="x in processingOrdersData">
+                                    <td>{{x.OrderId}}</td>
+                                    <td>{{x.CustomerName}}</td>
+                                    <td id="Addlink"> <a ng-show="!x.orderGoodToDelete" href="" ng-click="updateInventoryForOrder(x.OrderId)">(Update)</a>  <a ng-show="x.orderGoodToDelete" href="" disabled>-</a></td>
+                                    <td id="Addlink">  <a ng-show="!x.orderGoodToDelete" href="" ng-click="dropOrder(x.OrderId)">(Drop)</a> <a ng-show="x.orderGoodToDelete" href="" disabled>-</a></td>
+                                  </tr>
+                              </tbody>
+                        </table>
+                    </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="invUpdateModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle55" aria-hidden="true">
+              <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle55">{{ModalTitleText}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                    <div class="modal-body">
+                        <div class="container-fluid bg-light" style="width: 100%; font-size:2.5vw;">
+                            <div style="width: 100%;">
+                                <img ng-src="{{pathOfProductImage}}" style="width: 50%; margin-right: auto; margin-left: auto;">
+                                <a href="productPageOnSite?product={{currentlyViewingProduct}}" target="_blank"><img ng-src="icons/openlink.jpg" style="width: 30px; height: 30px; margin-right: auto; margin-left: auto;"> </a>
+                            </div>
+                            Stock Data: (Room - Website = Fullfillment)
+                            <table class="table table-bordered" style="word-wrap: break-word;">
+
+                                      <thead class="table-dark">
+                                          <tr>
+                                            <td id="a0" style="width:25%;"><b>Where</b></td>
+                                            <td id="a1" style="width:15%;"><b>Current Count</b></td>
+                                            <td id="a2" style="width:15%;"><b>Dec</b></td>  
+                                            <td id="a4" style="width:15%;"><b>Change</b></td>
+                                            <td id="a3" style="width:15%;"><b>Inc</b></td>
+                                            <td id="a5" style="width:15%;"><b>New Count</b></td>
+                                          </tr>
+                                      </thead>
+                                    <tr>
+                                        <td> Room </td>
+                                        <td> {{RoomOldCount}} </td>
+                                        <td><img src="icons/minus.png" style="width: 100%; margin-right: auto; margin-left: auto;" ng-click="decrementProductInRoom(currentlyViewingProduct)"></td>
+                                        <td> <input type="text" id="roomQuantityChange" size="5" disabled="" value="{{RoomChange}}"> </td>
+                                        <td><img src="icons/add.png" style="width: 100%; margin-right: auto; margin-left: auto;" ng-click="incrementProductInRoom(currentlyViewingProduct)"></td>
+                                        <td> {{RoomNewCount}} </td>
+                                    </tr>
+                                    <tr> 
+                                        <td> Website </td>
+                                        <td> {{WebsiteOldCount}} </td>
+                                        <td><img src="icons/minus.png" style="width: 100%; margin-right: auto; margin-left: auto;" ng-click="decrementProductInWebsite(currentlyViewingProduct)"></td>
+                                        <td> <input type="text" id="websiteQuantityChange" size="5" disabled value="{{WebsiteChange}}">  </td>
+                                        <td><img src="icons/add.png" style="width: 100%; margin-right: auto; margin-left: auto;" ng-click="incrementProductInWebsite(currentlyViewingProduct)"></td>
+                                        <td> {{WebsiteNewCount}} </td>
+                                    </tr>
+
+                                    <tr> <td colspan="2"> COMMENTS:  </td><td colspan="4"><input type="text" id="product_comment" size="30" value="{{inventoryUpdateComment}}"> </td> </tr>
+                                    <tr> <td colspan="2"> Expiry Date: </td><td colspan="4"><input type="text" id="product_expiry_date" size="30" value="{{expiry}}"> </td> </tr>
+                                    <tr> <td colspan="2"> Regular Price: </td><td colspan="4"><input type="text" id="product_regular_price" size="30" value="{{regularPrice}}" disabled> </td> </tr>
+                                    <tr> <td colspan="2"> Sale Price: </td><td colspan="4"><input type="text" id="iuc" size="product_sale_price" value="{{salePrice}}" disabled> </td> </tr>
+                                    <tr> <td colspan="2"> Buying Price: </td><td colspan="4"><input type="text" id="product_buy_price" size="30" value="{{buyPrice}}"> </td> </tr>
+                            </table>
+                        </div>
+                    </div>
+                  <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-info" ng-click="SaveChangesToProductInventory(currentlyViewingProduct)">Save</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+    </div>
+</body>
+</html>

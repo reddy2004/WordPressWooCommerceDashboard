@@ -1,0 +1,25 @@
+{
+    "time": "6/14/2021, 5:59:04 PM",
+    "updateTime": 1623673807,
+    "productsXML": "",
+    "serverPort" : 8000,
+    "auth" : [
+        {
+            "username" : "scartAdmin00",
+            "password" : "scartpassword"
+        },
+        {
+            "username" : "ofwindow",
+            "password" : "orderlist"
+        }
+    ],
+    "wooCommCurlAuth" : "<your_woo_comom_key>:<your woo comm secret>",
+    "useWooCommApi" : false,
+  "wooCommAuth": {
+    "url": "https://yourwebsite.com",
+    "consumerKey": "<your_woo_comom_key>",
+    "consumerSecret": "<your woo comm secret>",
+    "version": "wc/v1"
+  },
+    "delhiveryAuth" : {"username": "<delhivery username>", "password": "<delhivery password>"}
+}

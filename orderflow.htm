@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en" ng-app="myOrderFlowApp">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="https://printjs-4de6.kxcdn.com/print.min.css" crossorigin="anonymous">
+    <!-- <link rel="stylesheet" type="text/css" href="print.css"> -->
+    <title>Snack-cart</title>
+
+        <style>
+            body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                background-color: #DDDDDD;
+                font: 12pt "Tahoma";
+            }
+            * {
+                box-sizing: border-box;
+                -moz-box-sizing: border-box;
+            }
+            .page {
+                width: 210mm;
+                min-height: 297mm;
+                padding: 20mm;
+                margin: 10mm auto;
+                border: 1px #D3D3D3 solid;
+                border-radius: 5px;
+                background: white;
+                box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            }
+            .subpage {
+                padding: 0.5cm;
+                border: 1px red solid;
+                height: 257mm;
+                outline: 1cm #000000 solid;
+            }
+            
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            @media print {
+                html, body {
+                    width: 210mm;
+                    height: 297mm;
+                }
+                .page {
+                    margin: 0;
+                    border: initial;
+                    border-radius: initial;
+                    width: initial;
+                    min-height: initial;
+                    box-shadow: initial;
+                    background: initial;
+                    page-break-after: always;
+                }
+            }/*
+            table, th, td {
+              border: 1px solid black;
+              border-collapse: collapse;
+            }
+            table {
+              margin-left:auto;
+              margin-right:auto;
+            }
+            th {
+              text-align: center;
+            }
+            div {        
+              margin-left:auto;
+              margin-right:auto;
+            }*/
+
+            body.modal-open {
+                overflow: visible;
+            }
+
+            .text-responsive {
+                font-size: calc(100% + 1vw + 1vh);
+            }
+        </style>
+</head>
+<body>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.9/angular.min.js"></script>
+    <script src="assets/ngOrderFlowController.js"></script>
+    <script src="assets/pageInit.js"></script>
+        <script
+            src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha2/js/bootstrap.bundle.min.js"
+            integrity="sha384-BOsAfwzjNJHrJ8cZidOg56tcQWfp6y72vEJ8xQ9w6Quywb24iOsW913URv1IS4GD"
+            crossorigin="anonymous"></script>
+    <script src="https://printjs-4de6.kxcdn.com/print.min.js"></script>
+
+    <div ng-controller="myOrderFlow">
+            <div class="container-fluid bg-light" style="height: 20px;">
+
+            </div>
+            <div class="container-fluid bg-warn">
+                <div class="row">
+                    <div class="col-6"><button type="button" class="btn btn-info" ng-click="syncOrdersFromServer()">Sync [{{meta.lastTimeString}}]</button></div>
+                    <div class="col-4"><button type="button" class="btn btn-info" ng-click="printManifest()">Manifest</button></div>
+                    <div class="col-2"ng-show="isAdminDashboard"><button type="button" ng-class="OFButtonClass" ng-click="toggleOFFlag()">{{OFWindow}}</button></div>
+
+                </div>
+            </div>
+            
+            <div class="container-fluid bg-light" style="height: 20px; ">
+                <div ng-show="isAdminDashboard" style="display: none;">
+                    <form method="POST" action="/upload-delhivery" enctype="multipart/form-data">
+                        <div>
+                            <input type="file" name="shipping_label_pdf" />
+                        </div>
+                        <div>
+                            <input type="submit" name="btn_upload_shipping_pic" value="Upload" />
+                        </div>
+                    </form>
+                </div>
+            
+            <div class="container-fluid bg-light" style="height: 20px;">
+            </div>
+            <div class="container-fluid bg-light">
+                <!-- Content here -->
+                <div style="width:100%; font-size:3vw;  ">
+                    <table class="table  table-bordered">
+                            <col style="width:15%">
+                            <col style="width:50%">
+                            <col style="width:15%">
+                            <col style="width:30%">
+                      <thead class="table-dark">
+                          <tr>
+                            <td id="CustomerName" style ="word-break:break-all; padding: 2px;"><b>Order</b></td>
+                            <td id="Address" style ="word-break:break-all; padding: 2px;"><b>Address </b></td>
+                            <td id="Amount" style ="word-break:break-all; padding: 2px;"><b>Amount</b></td>
+                            <td id="Status" style ="word-break:break-all; padding: 2px;"><b>Status </b></td>
+                          </tr>
+                      </thead>  
+                      <tbody>
+                          <tr ng-repeat="x in processingOrdersData">
+                            <td style ="word-break:break-all; padding: 2px;">
+                                <b><a href="" ng-click="listOrderItems(x.OrderId)">{{ x.OrderId }}</a></b> <br> 
+                                <img ng-show="x.customData.hasComment == 0 && isAdminDashboard" src="icons/addComment.png" style="height: 30px; margin-right: auto; margin-left: auto;" ng-click="editComment(x.OrderId,x.CustomerName)">
+                                <img ng-show="x.customData.hasComment == 1 && isAdminDashboard" src="icons/commentPresent.png" style="height: 25px; margin-right: auto; margin-left: auto;" ng-click="editComment(x.OrderId,x.CustomerName)">
+                                <img ng-show="x.customData.hasComment == 1 && !isAdminDashboard" src="icons/commentPresent.png" style="height: 25px; margin-right: auto; margin-left: auto;" ng-click="editComment(x.OrderId,x.CustomerName)">
+                                <img ng-show="x.isDirty" src="icons/unsaved.png" style="height: 20px; margin-right: auto; margin-left: auto;"> 
+                                <img ng-show="x.customData.handDelivery" src="icons/handDeliveryOkay.png" style="height: 25px; margin-right: auto; margin-left: auto;"> 
+                                <img ng-show="!x.isDirty && x.customData.modifiedInvoice == 1" src="icons/modifieditems.png" style="height: 25px; margin-right: auto; margin-left: auto;"> 
+                            </td>
+                            <td style ="word-break:break-all; padding: 2px;"> <b> {{ x.CustomerName }} </b><br> {{ x.Address }} <br> <a href="" ng-click="listPreviousCustomerOrders(x.Phone)">{{ x.Phone }}</a> <br>
+                                <div ng-show="x.shipping.trackingId != ''"> TrackingID: <b> <a href="" ng-click="editTrackingId(x.OrderId, x.shipping.customoid, x.shipping.trackingId)"> {{x.shipping.trackingId}} <a></b></div>
+                            </td>
+                            <td style ="word-break:break-all; padding: 2px; text-align : 'center';"><b>{{ x.Amount }}</b><br> {{x.Type}} <br> 
+                                <a href="" ng-click="printCustomLabel(x.OrderId)">Label</a></td>
+                            <td style ="word-break:break-all; padding: 2px; text-align : 'center';">
+                                <a ng-show="x.removedInWp == false" href="" ng-click="changeStatus(x.OrderId, x.CustomerName)">{{ x.Status }}</a>
+                                <a ng-show="x.removedInWp == true && x.shipping.status != 'intransit' && x.shipping.status != 'outfordelivery' " href="" ng-click="removeOrder(x.OrderId)">(Remove)</a>
+
+                                <br> <div ng-show="x.shipping.trackingId != '' && x.shipping.status == 'manifested'">
+                                    <button type="button" class="btn btn-secondary btn-sm" style="width: 100%;" disabled>Mnifstd</button>
+                                </div>
+                                 <div ng-show="x.shipping.trackingId != '' && x.shipping.status == 'intransit'">
+                                    <button type="button" class="btn btn-success btn-sm" style="width: 100%;" disabled>InTrnst</button>
+                                </div>
+                                 <div ng-show="x.shipping.trackingId != '' && x.shipping.status == 'outfordelivery'">
+                                    <button type="button" class="btn btn-warning btn-sm" style="width: 100%;" disabled>OFD</button>
+                                </div>
+                                 <div ng-show="x.shipping.trackingId != '' && x.shipping.status == 'delivered'">
+                                    Rs. {{x.shipping.charges}}<br>
+                                    <button type="button" class="btn btn-dark btn-sm" style="width: 100%;" ng-click="removeOrder(x.OrderId)">Done</button>
+                                </div>
+                                 <div ng-show="x.shipping.trackingId != '' && x.shipping.status == 'returned'">
+                                    <button type="button" class="btn btn-danger btn-sm" style="width: 100%;" disabled>RTO</button>
+                                </div>
+                            </td>
+                          </tr>
+                      </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="examplePrinter" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitlePrinter" aria-hidden="true">
+              <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">LABEL</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                    <div class="modal-body" style="max-width: 100%; max-height: 100%;">
+                        <div id="printlayout" style="height:297mm; width:210mm;" class="container-fluid bg-light">
+                            <page size="A4" id="shiplabelBox">
+                              <div id="alllabelinfo" style="height: 50%;">
+                                  <div  style="width: 50%;border: 1px solid black;margin-right:  auto; margin-left: auto; margin-top: 5px; margin-bottom: 5px;">
+                                      <div style="text-align: center;">
+                                          <img id="barcode" src="" alt="ABC" width="70%" height="80">
+                                      </div>
+                                      <div style="height: 20px; width:100%;">
+                                            <div style="float: left; width: 25%;">
+                                                <b id="pincode"></b>
+                                            </div>
+                                            <div style="float: right; width:25%;">
+                                                <b id="scancode"></b>
+                                            </div>
+                                      </div>
+                                  </div>
+                                  
+                                  <div style="border: 1px solid black; width: 50%; height: 500; margin-left: auto; margin-right: auto;">
+                                      <table border="1">
+                                          <tr>
+                                              <td>
+                                                  <b>Shipping Address:</b> <br>
+                                                  <b><text id="sName" style="font-size:30px;"></text></b> <br>
+                                                  <text id="sAddress"></text> <br>
+                                                  <text id="sDestination"></text> <br>
+                                                  <b id="sPin"></b> <br>
+                                                  <b id="sPhone"> Phone:  </b>
+                                              </td>
+                                              <td>
+                                                <table >
+                                                  <tr><td style="text-align: center;"><b id="pt" ></b> </td></tr>
+                                                  <tr><td style="text-align: center;"><b id="rs"></b> </td></tr>
+                                                  <tr><td style="text-align: center;"><b id="xx"> EXPRESS</td></tr>
+                                                </table>
+                                              </td>
+                                          </tr>
+                                      </table>
+                                  </div>
+                                 
+                                  <div style="border: 1px solid black; width: 50%; height: 500; margin-left: auto; margin-right: auto;">
+                                      <table border="1" style="width: 100%;">
+                                          <thead>
+                                              <tr>
+                                                  <td> <b> Product </b></td>
+                                                  <td> <b>Price </b></td>
+                                                  <td> <b>Total </b></td>
+                                              </tr>
+                                          </thead>
+                                          <tbody>
+                                              <tr>
+                                                  <td> 
+                                                      Essential food items
+                                                   </td>
+                                                  <td> <text id='p1'> ₹0 </text></td>
+                                                  <td> <text id='p2'>₹0 </text></td>
+                                              </tr>
+                                          </tbody>
+                                          <tfood>
+                                              <tr>
+                                                  <td> <b>Total </b> </td>
+                                                  <td> <text id='p3'> ₹0  </text></td>
+                                                  <td><b> <text id='p4'> ₹0 </text></b>  </td>
+                                              </tr>
+                                          </tfood>
+                                      </table>
+                                  </div>
+                                  <div  style="width: 50%;height: 80; margin-right:  auto; margin-left: auto; border: 1px solid black; padding-top:10px; padding-bottom: 10px; text-align: center;">
+                                    <img id="oidcode" src="" alt="ABC" width="60%" height="80" style="margin-right:  auto; margin-left: auto;">
+                                  </div>
+                                  <div  style="width: 50%;height: 100;border-width: thin; margin-right:  auto; margin-left: auto;  border: 1px solid black; text-align: center;">
+                                      <b id="rtoaddress"></b>
+                                  </div>
+                              </div>
+
+                              <div style="height: 50%;">
+                                      <img style="max-width: 100%; max-height: 100%;" id="invoiceImage" src="invoicesPreview/16662.png">
+                              </div>
+
+                            </page> 
+                        </div>
+                    </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="printLabel22()">Print Label</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+
+            <div id="manifestTable"  style="display: none;" class="container-fluid bg-light">
+            <!-- Content here -->
+                <div style="width:100%; font-size:2vw;  ">
+                    <table class="table  table-bordered">
+                            <col style="width:15%">
+                            <col style="width:60%">
+                            <col style="width:25%">
+                      <thead class="table-dark">
+                          <tr>
+                            <td id="CustomerName" style ="word-break:break-all; padding: 2px;"><b>Order</b></td>
+                            <td id="Address" style ="word-break:break-all; padding: 2px;"><b>Name </b></td>
+                            <td id="Amount" style ="word-break:break-all; padding: 2px;"><b>Amount</b></td>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <tr ng-repeat="x in processingOrdersData" ng-show="!x.removedInWp">
+                            <td style ="word-break:break-all; padding: 2px;">
+                                <b>{{ x.OrderId }}</b>
+                            </td>
+                            <td style ="word-break:break-all; padding: 2px;"> <b> {{ x.CustomerName }} </b> ( {{x.Phone }} )</td>
+                            <td style ="word-break:break-all; padding: 2px; text-align : 'center';">{{ x.Amount }} : {{x.Type}}</td>
+                          </tr>
+                      </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="exampleModalComments" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle55" aria-hidden="true">
+              <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle55">{{ModalTitleText}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                    <div class="modal-body">
+                        <textarea ng-disabled="!isAdminDashboard" id="commentInputText" class="form-control" style="min-width: 100%; height: 200px;"></textarea>
+                    </div>
+                  <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" ng-show="isAdminDashboard" class="btn btn-info" ng-click="SaveChangesToOrderComments(currentlyViewingOrder)">Save</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+              <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">{{ModalTitleText}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                    <div class="modal-body">
+                        Not yet implimented.2
+                    </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="updateTrackingOid" tabindex="-1" role="dialog" aria-labelledby="updateTrackingOid" aria-hidden="true">
+              <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="updateTrackingOid">Order ID from Delhivery</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                    <div class="modal-body">
+                        Add the order ID as seen in cl.delhivery.com. This will be used for auto tracking package status <br>
+                        Update Order ID for {{currentlyViewingOrder}}
+                        <input id="oidDelhivery" type="text" value="" name="" style="width: 80%; margin-right: auto; margin-left: auto;">
+                        <br><br>
+                        Track Package <br>
+                        <a href="https://www.delhivery.com/track/package/{{currentlyViewingOrderTrackingId}}" target="_blank">{{currentlyViewingOrderTrackingId}}</a>
+                        
+                    </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" ng-show="isAdminDashboard" class="btn btn-info" ng-click="UpdateOidAsinDelhivery(currentlyViewingOrder)">Save</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="exampleModalLabel" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+              <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">{{ModalTitleText}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                    <div class="modal-body">
+                        <img  src="{{rtpImage}}" style="width: 100%;margin-right: auto; margin-left: auto;">
+                    </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" ng-click="printLabel(currentlyViewingOrder)">Print</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal for sync ing dialogs -->
+            <div class="modal fade" id="exampleModalLongSync" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle1" aria-hidden="true">
+              <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle1">{{SyncTitleText}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                    <div class="modal-body">
+                            Please wait while the server syncs with website <br>
+                            <img src="icons/progress1.gif" style="width: 60%; margin-right: auto; margin-left: auto;">
+                        </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal for sync ing dialogs -->
+            <div class="modal fade" id="exampleModalLongStatus" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle4" aria-hidden="true">
+              <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle4">{{ModalTitleText}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                    <div class="modal-body">
+                        <div class="container lg">
+                            <div class="row p-2"><button type="button" ng-show="isAdminDashboard == true" class="btn btn-info col-sm-12" ng-click="applyStatus(1, 'New', false)">Reset As New</button></div>
+                            <div class="row p-2"><button type="button" ng-show="isAdminDashboard == true" class="btn btn-info col-sm-12" ng-click="applyStatus(2, 'Approved', false)">Order Approved</button></div>
+                            <div class="row p-2"><button type="button" ng-show="isAdminDashboard == false" class="btn btn-info col-sm-12" ng-click="applyStatus(3, 'Blocked', true)">Blocked [Missing Items/Undeliverable]</button></div>
+                            <!--
+                            <div class="row p-2"><button type="button" class="btn btn-info col-sm-12" ng-click="applyStatus(4, 'Invoice Printed', true)">Printed Invoice</button></div>
+                            <div class="row p-2"><button type="button" class="btn btn-info col-sm-12" ng-click="applyStatus(5, 'Delivery Label , trueGenerated')">Printed Delhivery Label</button></div>
+                            -->
+                            <div class="row p-2"><button type="button" ng-show="isAdminDashboard == false" class="btn btn-info col-sm-12" ng-click="applyStatus(6, 'Sent to Sorting Center', false)">Sent out [Courier]</button></div>
+                            <div class="row p-2"><button type="button" ng-show="isAdminDashboard == false" class="btn btn-info col-sm-12" ng-click="applyStatus(7, 'Local Delivery', false)">Sent out [Local]</button></div>
+                            
+                            <!--
+                            <div class="row p-2"><button type="button" class="btn btn-primary col-sm-12" ng-click="applyStatus(20, 'In Transit', true)">In Transit</button></div>
+                            -->
+                            <div class="row p-2"><button type="button" class="btn btn-info col-sm-12" ng-show="isAdminDashboard == true" ng-click="applyStatus(25, 'Cancelled by Snack-cart', true)">Mark Cancelled by SnackCart</button></div>
+                            
+                        </div>
+                    </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal for sync ing dialogs -->
+            <div class="modal fade" id="exampleModalLongOrderItems" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle2" aria-hidden="true">
+              <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle2">Items to be packed for this order: {{currentlyViewingOrder}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                        <div class="modal-body">
+                            <div class="container-fluid bg-light" style="font-size:4vw; width: 100%;">
+                                <img ng-show="customData.sameAsInvoice == 1" src="icons/okay.png" style="width: 6%; margin-right: auto; margin-left: auto;"><img ng-show="customData.sameAsInvoice == 0" src="icons/notokay.png" style="width: 6%; margin-right: auto; margin-left: auto;">Same as Invoice <br>
+                                <img ng-show="customData.sameAsInvoice == 0"  src="icons/okay.png" style="width: 6%; margin-right: auto; margin-left: auto;"><img ng-show="customData.sameAsInvoice == 1"  src="icons/notokay.png" style="width: 6%; margin-right: auto; margin-left: auto;">Edited Invoice Items <br>
+                                <img ng-show="customData.supplimentaryItemsIncluded == 1"  src="icons/okay.png" style="width: 6%; margin-right: auto; margin-left: auto;"><img ng-show="customData.supplimentaryItemsIncluded == 0"  src="icons/notokay.png" style="width: 6%; margin-right: auto; margin-left: auto;">Additional items included <br>
+
+                                <table class="table  table-bordered">
+                                      <thead class="table-dark">
+                                          <tr>
+                                            <td id="Name" style="width:45%;"><b>Name</b></td>
+                                            <td id="Image" style="width:50%;"><b>Image</b></td>
+                                            <td id="Quantity" style="width:5%;">
+                                                <b>Quantity</b>
+                                            </td>
+                                          </tr>
+                                      </thead>  
+                                      <tbody>
+                                          <tr ng-repeat="x in itemsInOrder" ng-style="x.supplimented_quantity != 0 ? {'background-color':'yellow'} : {'background-color':'white'}">
+                                            <td><a href="productPageOnSite?product={{x.product_id}}" target="_blank">{{x.name}}</a></td>
+                                            <td>
+                                                <img ng-src="{{x.path}}" style="width: 100%; margin-right: auto; margin-left: auto;">
+                                            </td>
+                                            <td>
+                                                {{ x.quantity + x.supplimented_quantity }} <label ng-show="isAdminDashboard == true">[Orig:{{x.quantity}}] </label> <br> <br>
+                                                <img ng-show="isAdminDashboard == true" src="icons/add.png" style="width: 25%; margin-right: auto; margin-left: auto;" ng-click="incrementItemInOrder(customData.orderid, x.product_id)">
+                                                <img ng-show="isAdminDashboard == true" src="icons/minus.png" style="width: 25%; margin-right: auto; margin-left: auto;" ng-click="decrementItemInOrder(customData.orderid, x.product_id)">
+                                            </td>
+                                          </tr>
+                                      </tbody>
+                                </table>
+                                <button type="button" ng-show="isAdminDashboard == true" class="btn btn-success" data-dismiss="modal" ng-click="AddItemToOrder(currentlyViewingOrder)">Add Item</button>
+                            </div>
+                        </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" ng-show="isAdminDashboard == true" id="saveOrderButton" class="btn btn-primary" ng-disabled="!isDirty" ng-click="SaveChangesToOrder(currentlyViewingOrder)"> {{isDirtyMessage}} Save</button>
+                      </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal for sync ing dialogs -->
+            <div class="modal fade" id="addItemToOrderWindow" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitleee2" aria-hidden="true">
+              <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLongTitleee2">Add items to order: {{currentlyViewingOrder}} </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                            <div class="modal-body">
+                                <div class="container-fluid bg-light" style="font-size:4vw; width: 100%;">
+                                    <input id="searchInput" type="text" ng-keydown="onSearchText()" name="" style="width: 80%; margin-right: auto; margin-left: auto;"> <br>
+                                    <table class="table  table-bordered">
+                                          <thead class="table-dark">
+                                              <tr>
+                                                <td id="Name" style="width:45%;"><b>Name</b></td>
+                                                <td id="Image" style="width:50%;"><b>Expiry</b></td>
+                                                <td id="Quantity" style="width:5%;">
+                                                    <b>INV</b>
+                                                </td>
+                                                <td id="Addlink" style="width:10%;"> <b> Op</b></td>
+                                              </tr>
+                                          </thead>  
+                                          <tbody>
+                                              <tr ng-repeat="x in cached_product_list" ng-show="x.name.indexOf(searchKey) >= 0">
+                                                <td>{{x.name}}</td>
+                                                <td>{{x.expirydate}}</td>
+                                                <td> {{x.inventory}} </td>
+                                                <td id="Addlink" style="width:10%;"> <button type="button" class="btn btn-info" ng-click="addItemToOrderManual(currentlyViewingOrder, x.id, x.name)">Add</button> </td>
+                                              </tr>
+                                          </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Done</button>
+                      </div>
+                </div>
+              </div>
+            </div>
+        </div>
+</body>
+</html>
